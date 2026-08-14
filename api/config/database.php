@@ -1,7 +1,6 @@
 <?php
 
 use Illuminate\Support\Str;
-use PDO;
 
 $redis_host = env('REDIS_HOST', '127.0.0.1');
 $redis_database = env('REDIS_DATABASE', '0');
@@ -10,7 +9,6 @@ $database_url = env('DATABASE_URL');
 $database_connection = env('DB_CONNECTION', 'mysql');
 $database_host = env('DB_HOST', '127.0.0.1');
 $database_port = env('DB_PORT', 3306);
-$database_database = env('DB_DATABASE', 'laravel');
 $database_username = env('DB_USERNAME', 'root');
 $database_password = env('DB_PASSWORD', '');
 $database_socket = env('DB_SOCKET');
@@ -28,29 +26,36 @@ if ($cacheUrl = getenv('CACHE_URL')) {
 if ($database_url) {
     $url = parse_url($database_url);
 
-    if (isset($url['scheme'])) {
-        $database_connection = $url['scheme'];
-    }
+    if (is_array($url)) {
+        if (isset($url['scheme'])) {
+            $database_connection = match ($url['scheme']) {
+                'postgres', 'postgresql' => 'pgsql',
+                default => $url['scheme'],
+            };
+        }
 
-    if (isset($url['host'])) {
-        $database_host = $url['host'];
-    }
+        if (isset($url['host'])) {
+            $database_host = $url['host'];
+        }
 
-    if (isset($url['port'])) {
-        $database_port = $url['port'];
-    }
+        if (isset($url['port'])) {
+            $database_port = $url['port'];
+        }
 
-    if (isset($url['path'])) {
-        $database_database = ltrim($url['path'], '/');
-    }
+        if (isset($url['user'])) {
+            $database_username = $url['user'];
+        }
 
-    if (isset($url['user'])) {
-        $database_username = $url['user'];
+        if (isset($url['pass'])) {
+            $database_password = $url['pass'];
+        }
     }
+}
 
-    if (isset($url['pass'])) {
-        $database_password = $url['pass'];
-    }
+$database_database = env('DB_DATABASE', $database_connection === 'sqlite' ? database_path('database.sqlite') : 'laravel');
+
+if ($database_url && is_array($url) && isset($url['path'])) {
+    $database_database = ltrim($url['path'], '/');
 }
 
 return [
@@ -87,15 +92,13 @@ return [
     'connections' => [
         'sqlite' => [
             'driver' => 'sqlite',
-            'url' => env('DATABASE_URL'),
-            'database' => env('DB_DATABASE', database_path('database.sqlite')),
+            'database' => $database_database,
             'prefix' => '',
             'foreign_key_constraints' => env('DB_FOREIGN_KEYS', true),
         ],
 
         'mysql' => [
             'driver' => 'mysql',
-            'url' => env('DATABASE_URL'),
             'host' => $database_host,
             'port' => $database_port,
             'database' => $database_database,
@@ -109,13 +112,12 @@ return [
             'strict' => true,
             'engine' => null,
             'options' => extension_loaded('pdo_mysql') ? array_filter([
-                PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
+                \PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
             ]) : [],
         ],
 
         'pgsql' => [
             'driver' => 'pgsql',
-            'url' => env('DATABASE_URL'),
             'host' => $database_host,
             'port' => $database_port,
             'database' => $database_database,
@@ -130,7 +132,6 @@ return [
 
         'sqlsrv' => [
             'driver' => 'sqlsrv',
-            'url' => env('DATABASE_URL'),
             'host' => $database_host,
             'port' => $database_port,
             'database' => $database_database,
