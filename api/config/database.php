@@ -1,10 +1,19 @@
 <?php
 
 use Illuminate\Support\Str;
+use PDO;
 
 $redis_host = env('REDIS_HOST', '127.0.0.1');
 $redis_database = env('REDIS_DATABASE', '0');
 $redis_password = env('REDIS_PASSWORD', null);
+$database_url = env('DATABASE_URL');
+$database_connection = env('DB_CONNECTION', 'mysql');
+$database_host = env('DB_HOST', '127.0.0.1');
+$database_port = env('DB_PORT', 3306);
+$database_database = env('DB_DATABASE', 'laravel');
+$database_username = env('DB_USERNAME', 'root');
+$database_password = env('DB_PASSWORD', '');
+$database_socket = env('DB_SOCKET');
 
 if ($cacheUrl = getenv('CACHE_URL')) {
     $url = parse_url($cacheUrl);
@@ -16,6 +25,33 @@ if ($cacheUrl = getenv('CACHE_URL')) {
     $redis_database = isset($url['path']) ? substr($url['path'], 1) : 'cache';
 }
 
+if ($database_url) {
+    $url = parse_url($database_url);
+
+    if (isset($url['scheme'])) {
+        $database_connection = $url['scheme'];
+    }
+
+    if (isset($url['host'])) {
+        $database_host = $url['host'];
+    }
+
+    if (isset($url['port'])) {
+        $database_port = $url['port'];
+    }
+
+    if (isset($url['path'])) {
+        $database_database = ltrim($url['path'], '/');
+    }
+
+    if (isset($url['user'])) {
+        $database_username = $url['user'];
+    }
+
+    if (isset($url['pass'])) {
+        $database_password = $url['pass'];
+    }
+}
 
 return [
 
@@ -30,7 +66,7 @@ return [
     |
     */
 
-    'default' => env('DB_CONNECTION', 'mysql'),
+    'default' => $database_connection,
 
     /*
     |--------------------------------------------------------------------------
@@ -48,7 +84,63 @@ return [
     |
     */
 
-    'connections' => [],
+    'connections' => [
+        'sqlite' => [
+            'driver' => 'sqlite',
+            'url' => env('DATABASE_URL'),
+            'database' => env('DB_DATABASE', database_path('database.sqlite')),
+            'prefix' => '',
+            'foreign_key_constraints' => env('DB_FOREIGN_KEYS', true),
+        ],
+
+        'mysql' => [
+            'driver' => 'mysql',
+            'url' => env('DATABASE_URL'),
+            'host' => $database_host,
+            'port' => $database_port,
+            'database' => $database_database,
+            'username' => $database_username,
+            'password' => $database_password,
+            'unix_socket' => $database_socket,
+            'charset' => 'utf8mb4',
+            'collation' => 'utf8mb4_unicode_ci',
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'strict' => true,
+            'engine' => null,
+            'options' => extension_loaded('pdo_mysql') ? array_filter([
+                PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
+            ]) : [],
+        ],
+
+        'pgsql' => [
+            'driver' => 'pgsql',
+            'url' => env('DATABASE_URL'),
+            'host' => $database_host,
+            'port' => $database_port,
+            'database' => $database_database,
+            'username' => $database_username,
+            'password' => $database_password,
+            'charset' => 'utf8',
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'search_path' => 'public',
+            'sslmode' => 'prefer',
+        ],
+
+        'sqlsrv' => [
+            'driver' => 'sqlsrv',
+            'url' => env('DATABASE_URL'),
+            'host' => $database_host,
+            'port' => $database_port,
+            'database' => $database_database,
+            'username' => $database_username,
+            'password' => $database_password,
+            'charset' => 'utf8',
+            'prefix' => '',
+            'prefix_indexes' => true,
+        ],
+    ],
 
     /*
     |--------------------------------------------------------------------------
