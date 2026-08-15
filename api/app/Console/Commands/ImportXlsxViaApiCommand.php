@@ -5,7 +5,6 @@ namespace App\Console\Commands;
 use App\Helpers\FleetbaseImporter;
 use App\Helpers\GoogleDriveDownloader;
 use Illuminate\Console\Command;
-use PhpOffice\PhpSpreadsheet\IOFactory;
 
 class ImportXlsxViaApiCommand extends Command
 {
@@ -187,13 +186,13 @@ class ImportXlsxViaApiCommand extends Command
      */
     protected function readXlsx(string $filePath): array
     {
-        if (!class_exists(IOFactory::class)) {
+        if (!class_exists(\PhpOffice\PhpSpreadsheet\IOFactory::class)) {
             $this->error('PhpSpreadsheet is not installed. Run: composer require phpoffice/phpspreadsheet');
             return [];
         }
 
         try {
-            $spreadsheet = IOFactory::load($filePath);
+            $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($filePath);
             $sheet       = $spreadsheet->getActiveSheet();
             $rawRows     = $sheet->toArray(null, true, true, false);
 
