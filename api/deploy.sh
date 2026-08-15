@@ -3,6 +3,11 @@
 # Exit the script as soon as a command fails
 set -e
 
+# Clear cached Laravel state first so new environment values are used for DB access.
+php artisan config:clear
+php artisan cache:clear
+php artisan route:clear
+
 # Create mysql databases if none exists
 php artisan mysql:createdb
 
@@ -23,10 +28,6 @@ php artisan queue:restart
 
 # Sync scheduler
 php artisan schedule-monitor:sync
-
-# Clear cache
-php artisan cache:clear
-php artisan route:clear
 
 # Optimize
 php artisan config:cache

@@ -6,16 +6,20 @@ services:
   application:
     environment:
       CONSOLE_HOST: http://localhost:4200
+      # If you override the database connection for Docker, keep the host as `database`
+      # unless you are pointing at an external MySQL server.
+      # DATABASE_URL: ******database/fleetbase
       # Add your environment-specific variables here
       MAIL_MAILER: smtp  # or ses, mailgun, postmark, sendgrid
       OSRM_HOST: https://router.project-osrm.org
+      # FLEETBASE_HOST: https://api.fleetbase.io
       # IPINFO_API_KEY: your_api_key
       # GOOGLE_MAPS_API_KEY: your_api_key
       # GOOGLE_MAPS_LOCALE: us
       # TWILIO_SID: your_twilio_sid
       # TWILIO_TOKEN: your_twilio_token
       # TWILIO_FROM: your_twilio_phone
-      # FLEETBASE_API_KEY: your_fleetbase_api_key
+      # FLEETBASE_API_KEY: rotate_and_set_a_fresh_api_key
       # GOOGLE_DRIVE_FOLDER_ID: your_google_drive_folder_id
     volumes:
       - ./api/app/Console/Commands/ImportXlsxViaApiCommand.php:/fleetbase/api/app/Console/Commands/ImportXlsxViaApiCommand.php
