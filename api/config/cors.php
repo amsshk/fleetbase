@@ -26,7 +26,7 @@ return [
         env('CONSOLE_HOST'),
         Utils::addWwwToUrl(env('CONSOLE_HOST')),
         // Derive a console origin from APP_URL when CONSOLE_HOST is not set
-        env('CONSOLE_HOST') ? null : (($appHost = parse_url(env('APP_URL', ''), PHP_URL_HOST)) ? 'http://' . $appHost . ':4200' : null),
+        env('CONSOLE_HOST') ? null : (($appUrl = env('APP_URL', '')) && ($appHost = parse_url($appUrl, PHP_URL_HOST)) ? parse_url($appUrl, PHP_URL_SCHEME) . '://' . $appHost . ':4200' : null),
         ...Utils::arrayFrom(env('FRONTEND_HOSTS', '')),
     ])),
 
