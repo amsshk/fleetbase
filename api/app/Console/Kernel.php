@@ -8,6 +8,13 @@ use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 class Kernel extends ConsoleKernel
 {
     /**
+     * The Artisan commands provided by your application.
+     */
+    protected $commands = [
+        \App\Console\Commands\ImportXlsxViaApiCommand::class,
+    ];
+
+    /**
      * Define the application's command schedule.
      *
      * @param  \Illuminate\Console\Scheduling\Schedule  $schedule
@@ -25,6 +32,11 @@ class Kernel extends ConsoleKernel
      */
     protected function commands()
     {
-        $this->load(__DIR__.'/Commands');
+        $commandFile = __DIR__ . '/Commands/ImportXlsxViaApiCommand.php';
+        if (file_exists($commandFile)) {
+            require_once $commandFile;
+        }
+
+        $this->load(__DIR__ . '/Commands');
     }
 }
