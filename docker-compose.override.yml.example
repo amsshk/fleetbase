@@ -15,6 +15,12 @@ services:
       # TWILIO_SID: your_twilio_sid
       # TWILIO_TOKEN: your_twilio_token
       # TWILIO_FROM: your_twilio_phone
+      # FLEETBASE_API_KEY: your_fleetbase_api_key
+      # GOOGLE_DRIVE_FOLDER_ID: your_google_drive_folder_id
+    volumes:
+      - ./api/app/Console/Commands:/fleetbase/api/app/Console/Commands
+      - ./api/app/Helpers:/fleetbase/api/app/Helpers
+      - ./api/config/import.php:/fleetbase/api/config/import.php
 
   socket:
     environment:
