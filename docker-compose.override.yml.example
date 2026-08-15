@@ -8,7 +8,7 @@ services:
       CONSOLE_HOST: http://localhost:4200
       # If you override the database connection for Docker, keep the host as `database`
       # unless you are pointing at an external MySQL server.
-      # DATABASE_URL: ******database/fleetbase
+      # DATABASE_URL: mysql://<user>:<password>@database/fleetbase
       # Add your environment-specific variables here
       MAIL_MAILER: smtp  # or ses, mailgun, postmark, sendgrid
       OSRM_HOST: https://router.project-osrm.org
