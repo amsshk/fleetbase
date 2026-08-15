@@ -6,6 +6,7 @@ use App\Support\Import\ImportService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use Throwable;
 
@@ -116,7 +117,9 @@ class ImportController extends Controller
         ]);
 
         if (!$request->hasFile('file') && empty($validated['rows'])) {
-            abort(response()->json(['message' => 'Either file upload or rows payload is required.'], 422));
+            throw ValidationException::withMessages([
+                'file' => 'Either file upload or rows payload is required.',
+            ]);
         }
 
         return $validated;
