@@ -12,7 +12,7 @@ abstract class ImportBaseCommand extends Command
     /**
      * Default import storage path.
      */
-    protected string $importPath = '/var/www/fleetbase/storage/imports/';
+    protected string $importPath = '';
 
     /**
      * Import statistics.
@@ -32,7 +32,7 @@ abstract class ImportBaseCommand extends Command
         $file = $this->resolveFile();
 
         if (!$file) {
-            $this->error('No import file found. Pass --file=<path> or place the file in ' . $this->importPath);
+            $this->error('No import file found. Pass --file=<path> or place the file in ' . storage_path('imports'));
 
             return self::FAILURE;
         }
@@ -143,7 +143,8 @@ abstract class ImportBaseCommand extends Command
         // Auto-detect by pattern in default import directory
         $pattern = $this->defaultFilePattern();
         if ($pattern) {
-            $files = glob($this->importPath . $pattern);
+            $dir   = rtrim(storage_path('imports'), '/') . '/';
+            $files = glob($dir . $pattern);
             if (!empty($files)) {
                 return $files[0];
             }

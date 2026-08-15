@@ -18,7 +18,13 @@ class DownloadGoogleDrive extends Command
     /**
      * Default output directory.
      */
-    protected string $defaultOutputDir = '/var/www/fleetbase/storage/imports/';
+    protected string $defaultOutputDir = '';
+
+    public function __construct()
+    {
+        parent::__construct();
+        $this->defaultOutputDir = storage_path('imports');
+    }
 
     /**
      * Known file IDs for the shared Fleetbase import folder.
@@ -52,7 +58,7 @@ class DownloadGoogleDrive extends Command
 
         // Ensure output directory exists
         if (!is_dir($outputDir)) {
-            if (!mkdir($outputDir, 0777, true)) {
+            if (!mkdir($outputDir, 0755, true)) {
                 $this->error("Could not create output directory: {$outputDir}");
 
                 return self::FAILURE;

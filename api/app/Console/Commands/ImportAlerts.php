@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
 class ImportAlerts extends ImportBaseCommand
@@ -13,9 +14,23 @@ class ImportAlerts extends ImportBaseCommand
 
     protected $description = 'Import alerts/issues from an Alert XLSX file into the database';
 
+    /**
+     * Resolved target table name. Determined once before rows are processed.
+     */
+    protected string $targetTable = 'alerts';
+
     protected function defaultFilePattern(): ?string
     {
         return 'Alert_*.xlsx';
+    }
+
+    public function handle(): int
+    {
+        // Determine the correct table once, before any transaction begins.
+        $this->targetTable = Schema::hasTable('alerts') ? 'alerts' : 'issues';
+        $this->info("Using table: {$this->targetTable}");
+
+        return parent::handle();
     }
 
     protected function importRow(array $row, int $index): mixed
@@ -44,10 +59,8 @@ class ImportAlerts extends ImportBaseCommand
         $uuid   = Str::uuid()->toString();
         $public = 'alert_' . Str::random(14);
 
-        // Try inserting into `alerts` table first, fall back to `issues`
-        $table = 'alerts';
-        try {
-            DB::table($table)->insert([
+        if ($this->targetTable === 'alerts') {
+            DB::table('alerts')->insert([
                 'uuid'         => $uuid,
                 'public_id'    => $public,
                 'company_uuid' => $companyId,
@@ -59,28 +72,22 @@ class ImportAlerts extends ImportBaseCommand
                 'created_at'   => now(),
                 'updated_at'   => now(),
             ]);
-        } catch (\Throwable $e) {
-            // Try `issues` table as fallback
-            try {
-                $table = 'issues';
-                DB::table($table)->insert([
-                    'uuid'         => $uuid,
-                    'public_id'    => $public,
-                    'company_uuid' => $companyId,
-                    'title'        => $title,
-                    'report'       => $this->nullIfEmpty($row['Message'] ?? $row['message'] ?? $row['Description'] ?? null),
-                    'type'         => $this->nullIfEmpty($row['Type'] ?? $row['type'] ?? null) ?? 'other',
-                    'priority'     => $this->nullIfEmpty($row['Severity'] ?? $row['severity'] ?? $row['Priority'] ?? null) ?? 'low',
-                    'status'       => $this->nullIfEmpty($row['Status'] ?? $row['status'] ?? null) ?? 'pending',
-                    'created_at'   => now(),
-                    'updated_at'   => now(),
-                ]);
-            } catch (\Throwable $e2) {
-                throw new \RuntimeException("Could not insert alert into 'alerts' or 'issues' table: " . $e2->getMessage());
-            }
+        } else {
+            DB::table('issues')->insert([
+                'uuid'         => $uuid,
+                'public_id'    => $public,
+                'company_uuid' => $companyId,
+                'title'        => $title,
+                'report'       => $this->nullIfEmpty($row['Message'] ?? $row['message'] ?? $row['Description'] ?? null),
+                'type'         => $this->nullIfEmpty($row['Type'] ?? $row['type'] ?? null) ?? 'other',
+                'priority'     => $this->nullIfEmpty($row['Severity'] ?? $row['severity'] ?? $row['Priority'] ?? null) ?? 'low',
+                'status'       => $this->nullIfEmpty($row['Status'] ?? $row['status'] ?? null) ?? 'pending',
+                'created_at'   => now(),
+                'updated_at'   => now(),
+            ]);
         }
 
-        $this->line("  Row " . ($index + 2) . ": created alert '{$title}' in '{$table}'");
+        $this->line("  Row " . ($index + 2) . ": created alert '{$title}' in '{$this->targetTable}'");
 
         return $uuid;
     }

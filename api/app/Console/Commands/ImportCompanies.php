@@ -64,12 +64,4 @@ class ImportCompanies extends ImportBaseCommand
 
         return $uuid;
     }
-
-    protected function getOptions(): array
-    {
-        return [
-            ['file', null, \Symfony\Component\Console\Input\InputOption::VALUE_OPTIONAL, 'Path to the Company XLSX file'],
-            ['dry-run', null, \Symfony\Component\Console\Input\InputOption::VALUE_NONE, 'Dry run'],
-        ];
-    }
 }
