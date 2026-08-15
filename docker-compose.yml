@@ -91,8 +91,9 @@ services:
     volumes:
       - ./api/.env:/fleetbase/api/.env
       - ./api/storage/app:/fleetbase/api/storage/app
-      - ./api/app/Console/Commands:/fleetbase/api/app/Console/Commands
-      - ./api/app/Helpers:/fleetbase/api/app/Helpers
+      - ./api/app/Console/Commands/ImportXlsxViaApiCommand.php:/fleetbase/api/app/Console/Commands/ImportXlsxViaApiCommand.php
+      - ./api/app/Helpers/GoogleDriveDownloader.php:/fleetbase/api/app/Helpers/GoogleDriveDownloader.php
+      - ./api/app/Helpers/FleetbaseImporter.php:/fleetbase/api/app/Helpers/FleetbaseImporter.php
       - ./api/config/import.php:/fleetbase/api/config/import.php
     environment:
       ENVIRONMENT: development
