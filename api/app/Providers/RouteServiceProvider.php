@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Http\Controllers\ImportController;
 use Illuminate\Foundation\Support\Providers\RouteServiceProvider as ServiceProvider;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -26,6 +27,20 @@ class RouteServiceProvider extends ServiceProvider
                                 'time' => microtime(true) - $request->attributes->get('request_start_time')
                             ]
                         );
+                    }
+                );
+
+                Route::middleware('web')->group(
+                    function () {
+                        Route::get('/import', [ImportController::class, 'index'])->name('import.index');
+                    }
+                );
+
+                Route::prefix('api/import')->middleware('api')->group(
+                    function () {
+                        Route::get('/config', [ImportController::class, 'config'])->name('import.config');
+                        Route::post('/preview', [ImportController::class, 'preview'])->name('import.preview');
+                        Route::post('/run', [ImportController::class, 'import'])->name('import.run');
                     }
                 );
             }
