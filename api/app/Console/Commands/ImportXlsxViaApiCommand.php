@@ -43,9 +43,14 @@ class ImportXlsxViaApiCommand extends Command
     public function handle(): int
     {
         $dryRun  = (bool) $this->option('dry-run');
-        $type    = $this->option('type');
+        $type    = $this->normalizeType((string) $this->option('type'));
         $apiKey  = $this->option('api-key') ?: config('import.api_key');
         $baseUrl = $this->option('base-url') ?: config('import.api_host');
+
+        if ($this->option('type') !== null && $this->option('type') !== '' && $type === null) {
+            $this->error('Unsupported import type. Valid values: companies, users, vehicles, branches, tariffs.');
+            return self::FAILURE;
+        }
 
         if (empty($apiKey)) {
             $this->error('No Fleetbase API key provided. Set FLEETBASE_API_KEY env variable or use --api-key option.');
@@ -162,20 +167,46 @@ class ImportXlsxViaApiCommand extends Command
     }
 
     /**
+     * Normalise a user-supplied type to one of the canonical import types.
+     */
+    protected function normalizeType(?string $type): ?string
+    {
+        if ($type === null || trim($type) === '') {
+            return null;
+        }
+
+        $normalized = strtolower(trim($type));
+
+        foreach ($this->fileTypeMap as $keyword => $mappedType) {
+            if ($normalized === $keyword || $normalized === $mappedType) {
+                return $mappedType;
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * Match files to an import type based on filename keywords.
      */
     protected function matchFilesForType(array $files, string $type): array
     {
-        // Reverse map: type => keywords
-        $keywords = array_keys(array_filter($this->fileTypeMap, fn ($t) => $t === $type));
+        $normalizedType = $this->normalizeType($type);
+        if ($normalizedType === null) {
+            return [];
+        }
 
-        return array_filter($files, function (string $file) use ($keywords, $type) {
+        // Reverse map: type => keywords
+        $keywords = array_keys(array_filter($this->fileTypeMap, fn ($t) => $t === $normalizedType));
+
+        return array_filter($files, function (string $file) use ($keywords, $normalizedType) {
             $lower = strtolower(basename($file));
             foreach ($keywords as $keyword) {
                 if (str_contains($lower, $keyword)) {
                     return true;
                 }
             }
+
             // If no type filter was set and no keyword matched, skip
             return false;
         });
@@ -200,20 +231,33 @@ class ImportXlsxViaApiCommand extends Command
                 return [];
             }
 
-            // First row is the header
-            $headers = array_map(fn ($h) => strtolower(trim((string) $h)), array_shift($rawRows));
+            $headerIndex = null;
+            foreach ($rawRows as $index => $row) {
+                $values = array_values($row);
+                if (count(array_filter($values, fn ($value) => $value !== null && trim((string) $value) !== '')) > 0) {
+                    $headerIndex = $index;
+                    break;
+                }
+            }
 
-            $rows = [];
-            foreach ($rawRows as $rawRow) {
-                $row = array_combine($headers, $rawRow);
-                if ($row === false) {
+            if ($headerIndex === null) {
+                return [];
+            }
+
+            $headers = array_map(fn ($header) => strtolower(trim((string) $header)), array_values($rawRows[$headerIndex]));
+            $rows    = [];
+
+            foreach (array_slice($rawRows, $headerIndex + 1) as $rawRow) {
+                $normalizedRow = [];
+                foreach (array_values($rawRow) as $key => $value) {
+                    $normalizedRow[$headers[$key] ?? "column_{$key}"] = $value;
+                }
+
+                if (empty(array_filter($normalizedRow, fn ($v) => $v !== null && trim((string) $v) !== ''))) {
                     continue;
                 }
-                // Skip completely empty rows
-                if (empty(array_filter($row, fn ($v) => $v !== null && $v !== ''))) {
-                    continue;
-                }
-                $rows[] = $row;
+
+                $rows[] = $normalizedRow;
             }
 
             return $rows;

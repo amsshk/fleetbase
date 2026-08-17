@@ -32,11 +32,6 @@ class Kernel extends ConsoleKernel
      */
     protected function commands()
     {
-        $commandFile = __DIR__ . '/Commands/ImportXlsxViaApiCommand.php';
-        if (file_exists($commandFile)) {
-            require_once $commandFile;
-        }
-
         $this->load(__DIR__ . '/Commands');
     }
 }
