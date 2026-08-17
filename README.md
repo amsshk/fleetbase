@@ -144,6 +144,16 @@ If you have additional applications or frontends you can use the environment var
 docker compose exec application bash -c "php artisan key:generate --show"
 ```
 Next copy this value to the `APP_KEY` environment variable in the application container and restart.
+
+**Database Host:** in the bundled Docker Compose setup, the Laravel application must connect to MySQL through the `database` service host, not `127.0.0.1`. If you override the connection manually, keep the host as `database` unless you are using an external MySQL server.
+
+**Database Credential Rotation:** if credentials are exposed or rejected, rotate the MySQL password and update the application with the new value before redeploying. For import integrations, the application expects `FLEETBASE_API_KEY` and `FLEETBASE_HOST` environment variables.
+
+**Refresh Cached Config After Env Changes:** after changing database or API environment variables, clear Laravel's cached configuration before retrying:
+```bash
+docker compose exec application bash -c "php artisan config:clear && php artisan cache:clear"
+```
+If the MySQL server still returns `Access denied`, verify that the configured user is allowed to connect from the application host or Docker network.
   
 **Routing:** Fleetbase ships with a default OSRM server hosted by [router.project-osrm.org](https://router.project-osrm.org) but you're able to use your own or any other OSRM compatible server. You can modify this in the `console/environments` directory by modifying the .env file of the environment you're deploying and setting the `OSRM_HOST` to the OSRM server for Fleetbase to use.  
   

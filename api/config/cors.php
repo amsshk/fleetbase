@@ -21,7 +21,14 @@ return [
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => array_filter(['http://localhost:4200', env('CONSOLE_HOST'), Utils::addWwwToUrl(env('CONSOLE_HOST')), ...Utils::arrayFrom(env('FRONTEND_HOSTS', ''))]),
+    'allowed_origins' => array_filter(array_unique([
+        'http://localhost:4200',
+        env('CONSOLE_HOST'),
+        Utils::addWwwToUrl(env('CONSOLE_HOST')),
+        // Derive a console origin from APP_URL when CONSOLE_HOST is not set
+        env('CONSOLE_HOST') ? null : (($appUrl = env('APP_URL', '')) && ($appHost = parse_url($appUrl, PHP_URL_HOST)) ? parse_url($appUrl, PHP_URL_SCHEME) . '://' . $appHost . ':4200' : null),
+        ...Utils::arrayFrom(env('FRONTEND_HOSTS', '')),
+    ])),
 
     'allowed_origins_patterns' => [],
 
